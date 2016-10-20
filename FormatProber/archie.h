@@ -12,8 +12,6 @@ extern std::function<DWORD(UINT32, BYTE*)> LoadData;
 bool Init();
 void UnInit();
 
-WAVEFORMATEXTENSIBLE GetDefaultFormat();
-
 void Play();
 
 }//!namespace Archie

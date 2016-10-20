@@ -1,8 +1,7 @@
 #include <Audioclient.h>
 #include <mmdeviceapi.h>
 #include <functional>
-#include "waveformatexhelper.h"
-#include <iostream>
+#include <stdexcept>
 
 #define REFTIMES_PER_SEC 10000000 //One REFTIME is 100 nanoseconds. Or one tenth of a microsecond. Or 10^-7 seconds.
 #define REFTIMES_PER_MILLISEC 10000
@@ -91,18 +90,6 @@ bool Init()
 void UnInit()
 {
 	CleanUp();
-}
-
-WAVEFORMATEXTENSIBLE GetDefaultFormat()
-{
-	WAVEFORMATEXTENSIBLE r{0};
-	WAVEFORMATEXTENSIBLE* p = nullptr;
-	if(audioClient){
-		HRESULT errorcode = audioClient->GetMixFormat((WAVEFORMATEX**)&p); ThrowOnError(errorcode, "Archie::GetMixerFormat");
-		if (p) r = *p;
-		CoTaskMemFree(p);
-	}
-	return r;
 }
 
 void Play()

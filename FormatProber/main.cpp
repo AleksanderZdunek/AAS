@@ -4,11 +4,11 @@
 
 int main(int argc, char* argv[])
 {
-	std::cout << "Audio Format Prober!" << std::endl << std::endl;
+	std::cout << "~Audio Format Probe~" << std::endl << std::endl;
 
 	WAVEFORMATEXTENSIBLE myFormat;
 	Archie::Init();
-	myFormat = Archie::GetDefaultFormat();
+	myFormat = Archie::configFormat;
 	std::cout << "Default Format" << std::endl;
 	printWAVEFORMATEXTENSIBLE(myFormat);
 	Archie::UnInit();
@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
 		std::cerr << "Caught Exception. What: " << e.what() << std::endl;
 	}
 
+	std::cout << std::endl;
 	system("pause");
 	Archie::UnInit();
 	return 0;
