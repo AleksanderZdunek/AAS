@@ -19,24 +19,4 @@ struct WaveHeader
 	uint32_t IDtag; //"WAVE"
 };
 
-struct FormatChunk
-{
-	//common fields
-	uint16_t formatTag;
-	uint16_t channels; //number of channels
-	uint32_t samplesPerSecond; //a 'sample' is a waveform sample defined per channel
-	uint32_t avgBytesPerSecond; //(sizeof sample) * samplesPerSecond * channels
-	uint16_t blockAlign; // (sizeof sample) * channels
-
-	//format specific fields
-		//WAVE_FORMAT_PCM
-	uint16_t bitsPerSample;
-	//...
-};
-
-struct DataChunkHeader
-{
-
-};
-
 #endif // !WAVEHEADERSTRUCTS_H
