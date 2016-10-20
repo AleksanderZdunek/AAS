@@ -14,13 +14,7 @@ void UnInit();
 
 WAVEFORMATEXTENSIBLE GetDefaultFormat();
 
-bool IsFormatSupported(const WAVEFORMATEX* f);
-bool IsFormatSupported(const WAVEFORMATEX& f);
-bool IsFormatSupported(const WAVEFORMATEXTENSIBLE& f);
-
 void Play();
-
-bool Test();
 
 }//!namespace Archie
 

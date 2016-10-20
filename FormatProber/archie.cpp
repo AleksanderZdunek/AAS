@@ -105,28 +105,6 @@ WAVEFORMATEXTENSIBLE GetDefaultFormat()
 	return r;
 }
 
-bool Test()
-{
-	HRESULT errorcode = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0x88000000, audioClientBufferTentativeDuration, 0, &configFormat.Format, NULL); ThrowOnError(errorcode, "Archie::Test Initialize");
-	return FAILED(errorcode);
-}
-
-bool IsFormatSupported(const WAVEFORMATEX* f)
-{
-	WAVEFORMATEX* closestMatch;
-	HRESULT errorcode = audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, f,	&closestMatch);
-	CoTaskMemFree(closestMatch);
-	return !(FAILED(errorcode) || S_FALSE == errorcode);
-}
-bool IsFormatSupported(const WAVEFORMATEX& f)
-{
-	return IsFormatSupported(&f);
-}
-bool IsFormatSupported(const WAVEFORMATEXTENSIBLE& f)
-{
-	return IsFormatSupported((WAVEFORMATEX*)&f);
-}
-
 void Play()
 {
 	HRESULT errorcode;
