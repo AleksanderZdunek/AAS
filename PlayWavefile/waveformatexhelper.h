@@ -1,0 +1,10 @@
+#pragma once
+#ifndef WAVEFORMATEXHELPER_H
+#define WAVEFORMATEXHELPER_H
+
+#include <Audioclient.h>
+
+void printWAVEFORMATEXTENSIBLE(WAVEFORMATEXTENSIBLE s);
+void printWAVEFORMATEX(WAVEFORMATEX s);
+
+#endif
