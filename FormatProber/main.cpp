@@ -8,8 +8,12 @@ int main(int argc, char* argv[])
 
 	WAVEFORMATEXTENSIBLE myFormat;
 	Archie::Init();
-	myFormat = Archie::GetMixerFormat();
-	//printWAVEFORMATEXTENSIBLE(myFormat);
+	myFormat = Archie::GetDefaultFormat();
+	std::cout << "Default Format" << std::endl;
+	printWAVEFORMATEXTENSIBLE(myFormat);
+	Archie::UnInit();
+
+	std::cout << std::endl;
 	myFormat.Format.nSamplesPerSec = 44100;
 	myFormat.Format.nBlockAlign = 4;
 	myFormat.Format.nAvgBytesPerSec = myFormat.Format.nSamplesPerSec*myFormat.Format.nBlockAlign;
@@ -21,30 +25,15 @@ int main(int argc, char* argv[])
 
 	std::cout << std::endl;
 	try {
-		std::cout << "Test: " << (Archie::Test()?"Error, but no exception":"OK!") << std::endl;
+		Archie::Init();
+		std::cout << "Init OK" << std::endl;
+		Archie::Play(); std::cout << "Play()" << std::endl;
 	}
 	catch (std::runtime_error e) {
 		std::cerr << "Caught Exception. What: " << e.what() << std::endl;
 	}
 
-	/*
-	if (Archie::IsFormatSupported(myFormat))
-	{
-		std::cout << "Format Supported!" << std::endl;
-	}
-	else
-	{
-		std::cout << "Format Not Supported!" << std::endl;
-	}*/
-
-	/*
-	while(true)
-	{
-		std::cout << std::endl << "Mixer Format:" << std::endl;
-		printWAVEFORMATEXTENSIBLE(Archie::GetMixerFormat());
-		system("pause");
-	}*/
-
 	system("pause");
+	Archie::UnInit();
 	return 0;
 }

@@ -20,10 +20,10 @@ IAudioRenderClient *renderClient = nullptr;
 
 REFERENCE_TIME audioClientBufferTentativeDuration = 1 * REFTIMES_PER_SEC;
 static REFERENCE_TIME audioClientBufferDuration;
-static UINT32 audioClientBufferSize = 0;
-static UINT32& audioClientBufferFrameCount = audioClientBufferSize;
+static UINT32 audioClientBufferSize(0);
+static UINT32 audioClientBufferFrameCount(0);
 WAVEFORMATEXTENSIBLE configFormat {0};
-WAVEFORMATEXTENSIBLE* closestSupportedFormat(nullptr);
+static const WAVEFORMATEXTENSIBLE zeroed{0};
 
 std::function<DWORD(UINT32, BYTE*)> LoadData = [](UINT32, BYTE*) {return AUDCLNT_BUFFERFLAGS_SILENT;};
 
@@ -46,7 +46,7 @@ inline void ThrowOnError(HRESULT hr, char* s)
 	}
 };
 
-void Init()
+bool Init()
 {
 	HRESULT errorcode;
 
@@ -62,16 +62,46 @@ void Init()
 	//Init Step 4. Activate audio client
 	errorcode = audioDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&audioClient); ThrowOnError(errorcode, "Archie::Init Activate");
 
-	//Rest if init in Init2()
+	//Init Step 5. Get mix format
+	if(!memcmp(&configFormat,&zeroed,sizeof(WAVEFORMATEXTENSIBLE)))
+	{
+		WAVEFORMATEXTENSIBLE* pMixFormat(nullptr);
+		errorcode = audioClient->GetMixFormat(reinterpret_cast<WAVEFORMATEX**>(&pMixFormat)); ThrowOnError(errorcode, "Archie::Init GetMixFormat");
+		configFormat = *reinterpret_cast<WAVEFORMATEXTENSIBLE*>(pMixFormat);
+		CoTaskMemFree(pMixFormat);
+	}
+
+	//Init Step 6. Initialize audio stream
+	enum { AUTOCONVERTPCM_DEFAULT_QUALITY = 0x88000000 };
+	errorcode = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, AUTOCONVERTPCM_DEFAULT_QUALITY, audioClientBufferTentativeDuration, 0, &configFormat.Format, NULL); ThrowOnError(errorcode, "Archie::Init Initialize");
+
+	//Init Step 6.1. Get the actual size of the allocated buffer.
+	errorcode = audioClient->GetBufferSize(&audioClientBufferSize); ThrowOnError(errorcode, "Archie::Init GetBufferSize");
+	UINT audioFrameSize = configFormat.Format.nChannels * configFormat.Format.wBitsPerSample / 8;
+	audioClientBufferFrameCount = audioClientBufferSize / audioFrameSize;
+	audioClientBufferDuration = (REFERENCE_TIME)((double)REFTIMES_PER_SEC * audioClientBufferFrameCount / configFormat.Format.nSamplesPerSec);
+
+	//Init Step 7. Get access to the rendering interface of the audio client.
+	errorcode = audioClient->GetService(IID_IAudioRenderClient, (void**)&renderClient); ThrowOnError(errorcode, "Archie::Init GetService");
+
+	//~init finished
+	return true;
 }
 
-WAVEFORMATEXTENSIBLE GetMixerFormat()
+void UnInit()
+{
+	CleanUp();
+}
+
+WAVEFORMATEXTENSIBLE GetDefaultFormat()
 {
 	WAVEFORMATEXTENSIBLE r{0};
 	WAVEFORMATEXTENSIBLE* p = nullptr;
-	HRESULT errorcode = audioClient->GetMixFormat((WAVEFORMATEX**)&p); ThrowOnError(errorcode, "Archie::GetMixerFormat");
-	if (p) r = *p;
-	CoTaskMemFree(p);
+	if(audioClient){
+		HRESULT errorcode = audioClient->GetMixFormat((WAVEFORMATEX**)&p); ThrowOnError(errorcode, "Archie::GetMixerFormat");
+		if (p) r = *p;
+		CoTaskMemFree(p);
+	}
 	return r;
 }
 
@@ -97,39 +127,8 @@ bool IsFormatSupported(const WAVEFORMATEXTENSIBLE& f)
 	return IsFormatSupported((WAVEFORMATEX*)&f);
 }
 
-void Init2()
-{
-	HRESULT errorcode;
-	//Init Step 5. Check format support
-	/*
-	HRESULT errorcode = audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, &configFormat.Format, reinterpret_cast<WAVEFORMATEX**>(&closestSupportedFormat));
-	if (S_FALSE == errorcode) //See for explanation: https://msdn.microsoft.com/en-us/library/windows/desktop/dd370876(v=vs.85).aspx
-	{
-		CleanUp();
-		throw std::runtime_error("Archie::Init2 IsFormatSupported + S_FALSE");
-	}
-	ThrowOnError(errorcode, "Archie::Init2 IsFormatSupported");
-	*/
-
-	//Init Step 6. Initialize audio stream
-	errorcode = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, audioClientBufferTentativeDuration, 0, &configFormat.Format, NULL); ThrowOnError(errorcode, "Archie::Init2 Initialize");
-
-	//Init Step 6.1. Get the actual size of the allocated buffer.
-	errorcode = audioClient->GetBufferSize(&audioClientBufferSize); ThrowOnError(errorcode, "Archie::Init2 GetBufferSize");
-	UINT audioFrameSize = configFormat.Format.nChannels * configFormat.Format.wBitsPerSample / 8;
-	audioClientBufferFrameCount = audioClientBufferSize / audioFrameSize;
-	audioClientBufferDuration = (REFERENCE_TIME)((double)REFTIMES_PER_SEC * audioClientBufferFrameCount / configFormat.Format.nSamplesPerSec);
-
-	//Init Step 7. Get access to the rendering interface of the audio client.
-	errorcode = audioClient->GetService(IID_IAudioRenderClient, (void**)&renderClient); ThrowOnError(errorcode, "Archie::Init2 GetService");
-
-	//~init finished
-}
-
 void Play()
 {
-	Init2();
-
 	HRESULT errorcode;
 
 	DWORD flag = 0;
@@ -158,9 +157,6 @@ void Play()
 	}
 	Sleep((DWORD)(audioClientBufferDuration / REFTIMES_PER_MILLISEC / 2)); //Wait for last data to play before stopping
 	errorcode = audioClient->Stop(); ThrowOnError(errorcode, "Archie::Play Stop");
-
-	//release aquired resources
-	SAFE_RELEASE(renderClient);
 }
 
 }//!Archie

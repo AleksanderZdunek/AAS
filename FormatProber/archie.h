@@ -9,9 +9,10 @@ namespace Archie{
 extern WAVEFORMATEXTENSIBLE configFormat;
 extern std::function<DWORD(UINT32, BYTE*)> LoadData;
 
-void Init();
+bool Init();
+void UnInit();
 
-WAVEFORMATEXTENSIBLE GetMixerFormat();
+WAVEFORMATEXTENSIBLE GetDefaultFormat();
 
 bool IsFormatSupported(const WAVEFORMATEX* f);
 bool IsFormatSupported(const WAVEFORMATEX& f);
