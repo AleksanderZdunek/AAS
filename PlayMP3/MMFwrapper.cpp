@@ -1,8 +1,12 @@
 //MMF wrapper ( Microsoft Media Foundation )
+//based on https://msdn.microsoft.com/en-us/library/windows/desktop/ms703190(v=vs.85).aspx
 #include <mfapi.h>
 #include <mfidl.h>
 
+#include <comdef.h>
+
 #include <stdexcept>
+#include <functional>
 
 IMFMediaSession* pMediaSession = nullptr;
 IMFSourceResolver* pSourceResolver = nullptr;
@@ -32,8 +36,37 @@ inline void ThrowOnError(HRESULT hr, char* s)
 		throw std::runtime_error(s);
 	}
 };
+inline void ThrowOnError(HRESULT hr, char* s, std::function<void()> cleanUpFunction)
+{
+	if (FAILED(hr))
+	{
+		cleanUpFunction();
+		throw std::runtime_error(s);
+	}
+}
+struct throwOnError_struct
+{
+	char* message;
+	std::function<void()> cleanUpFunction;
+};
+inline throwOnError_struct ThrowOnError(char *s, std::function<void()> cleanUpFunction = [](){})
+{
+	return{s, cleanUpFunction };
+}
+inline HRESULT operator>>(HRESULT hr, throwOnError_struct s)
+{
+	if (FAILED(hr))
+	{
+		s.cleanUpFunction();
+		_com_error err(hr);
+		throw std::runtime_error(std::string(s.message) + "\nErrorcode: " + err.ErrorMessage);
+	}
+}
 
 const wchar_t* fileName; //LPCWSTR fileName;
+
+//function prototype. clean this up later
+void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, DWORD streamIndex_param);
 
 void Init()
 {
@@ -53,8 +86,19 @@ void Init()
 	//4. Create playback topology.
 	errorcode = MFCreateTopology(&pTopology); ThrowOnError(errorcode, "MMFwrapper MFCreateTopology");
 	errorcode = pMediaSource->CreatePresentationDescriptor(&pPresentationDescriptor); ThrowOnError(errorcode, "MMFwrapper CreatePresentationDescriptor");
-
-
+	DWORD count_SourceStreams = 0;
+	pPresentationDescriptor->GetStreamDescriptorCount(&count_SourceStreams); ThrowOnError(errorcode, "MMFwrapper GetStreamDescriptorCount");
+	try{
+		for (DWORD i = 0; i < count_SourceStreams; i++)
+		{
+			helper_AddBranchToPartialTopology(pTopology, pMediaSource, pPresentationDescriptor, i);
+		}
+	}
+	catch (std::runtime_error e)
+	{
+		CleanUp();
+		throw e;
+	}
 }
 
 void help_CreateMediaSinkActivate(IMFStreamDescriptor* pSourceStreamDescriptor_param, IMFActivate** ppActivate_param)
@@ -101,26 +145,43 @@ void help_AddOutputNode(IMFTopology* pTopology_param, IMFActivate *pActivate_par
 	return;
 }
 
-void help_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, DWORD streamIndex_param)
+void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, DWORD streamIndex_param)
 {
 	IMFStreamDescriptor* pStreamDescriptor_internal = nullptr;
 	IMFActivate* pSinkActivate_internal = nullptr;
 	IMFTopologyNode* pSourceNode_internal = nullptr;
 	IMFTopologyNode* pOutputNode_internal = nullptr;
-
 	BOOL fSelected_internal = FALSE;
-	pPresentationDescriptor->GetStreamDescriptorByIndex(streamIndex_param, &fSelected_internal, &pStreamDescriptor_internal);
-	if(fSelected_internal)
+
+	std::function<void()> cleanUp_internal{[&]()
 	{
-		help_CreateMediaSinkActivate(pStreamDescriptor_internal, &pSinkActivate_internal);
-		help_AddSourceNode(pTopology_param, pMediaSource_param, pPresentationDescriptor_param, pStreamDescriptor_internal, &pSourceNode_internal);
-		help_AddOutputNode(pTopology_param, pSinkActivate_internal, 0, &pOutputNode_internal);
-		pSourceNode_internal->ConnectOutput(0,pOutputNode_internal, 0);
+		SAFE_RELEASE(pOutputNode_internal);
+		SAFE_RELEASE(pSourceNode_internal);
+		SAFE_RELEASE(pSinkActivate_internal);
+		SAFE_RELEASE(pStreamDescriptor_internal);
+	}};
+
+	pPresentationDescriptor->GetStreamDescriptorByIndex(streamIndex_param, &fSelected_internal, &pStreamDescriptor_internal) >> ThrowOnError("GetStreamDescriptorByIndex", cleanUp_internal);
+
+	if (fSelected_internal)
+	{
+		try {
+			help_CreateMediaSinkActivate(pStreamDescriptor_internal, &pSinkActivate_internal);
+			help_AddSourceNode(pTopology_param, pMediaSource_param, pPresentationDescriptor_param, pStreamDescriptor_internal, &pSourceNode_internal);
+			help_AddOutputNode(pTopology_param, pSinkActivate_internal, 0, &pOutputNode_internal);
+		}
+		catch (std::runtime_error e)
+		{
+			cleanUp_internal();
+			throw e;
+		}
+		pSourceNode_internal->ConnectOutput(0, pOutputNode_internal, 0) >> ThrowOnError("ConnectOutput", cleanUp_internal);
 	}
 	return;
 }
 
-void CreatePlaybackTopology(IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor *pPresentationDescriptor_param, IMFTopology** ppTopology_param)
+/*REMOVE ME
+void help_CreatePlaybackTopology(IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor *pPresentationDescriptor_param, IMFTopology** ppTopology_param)
 {
 	IMFTopology *pTopology_internal = nullptr;
 	DWORD countSourceStreams_internal = 0;
@@ -134,3 +195,4 @@ void CreatePlaybackTopology(IMFMediaSource* pMediaSource_param, IMFPresentationD
 	*ppTopology_param = pTopology_internal;
 	return;
 }
+*/
