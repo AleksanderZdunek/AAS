@@ -59,8 +59,9 @@ inline HRESULT operator>>(HRESULT hr, throwOnError_struct s)
 	{
 		s.cleanUpFunction();
 		_com_error err(hr);
-		throw std::runtime_error(std::string(s.message) + "\nErrorcode: " + err.ErrorMessage);
+		throw std::runtime_error(std::string(s.message) +"\nErrorcode: " + err.ErrorMessage());
 	}
+	return hr;
 }
 
 const wchar_t* fileName; //LPCWSTR fileName;
@@ -99,50 +100,24 @@ void Init()
 		CleanUp();
 		throw e;
 	}
+
+	//5. Set the topology on the Media Session.
+	pMediaSession->SetTopology(0, pTopology);
+
+	//6. Get events from the Media Session
+	//ignore for now
 }
 
-void help_CreateMediaSinkActivate(IMFStreamDescriptor* pSourceStreamDescriptor_param, IMFActivate** ppActivate_param)
+void Play(char* filename)
 {
-	IMFMediaTypeHandler* pMediaTypeHandler_internal = nullptr;
-	IMFActivate *pActivate_internal = nullptr;
-
-	pSourceStreamDescriptor_param->GetMediaTypeHandler(&pMediaTypeHandler_internal);
-	GUID guidMajorType_internal;
-	pMediaTypeHandler_internal->GetMajorType(&guidMajorType_internal);
-	if (MFMediaType_Audio == guidMajorType_internal)
-	{
-		MFCreateAudioRendererActivate(&pActivate_internal);
-	}
-	else
-	{
-		//IMFPresentationDescriptor::DeselectStream(streamIndex)
-	}
-	*ppActivate_param = pActivate_internal;
-	return;
-}
-
-void help_AddSourceNode(IMFTopology* pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, IMFStreamDescriptor* pStreamDescriptor_param, IMFTopologyNode** ppNode_param)
-{
-	IMFTopologyNode* pNode_internal = nullptr;
-	MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &pNode_internal);
-	pNode_internal->SetUnknown(MF_TOPONODE_SOURCE, pMediaSource_param);
-	pNode_internal->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, pPresentationDescriptor_param);
-	pNode_internal->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, pStreamDescriptor_param);
-	pTopology_param->AddNode(pNode_internal);
-	*ppNode_param = pNode_internal;
-	return;
-}
-
-void help_AddOutputNode(IMFTopology* pTopology_param, IMFActivate *pActivate_param, DWORD streamSinkID_param, IMFTopologyNode** ppNode_param)
-{
-	IMFTopologyNode* pNode_internal = nullptr;
-	MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &pNode_internal);
-	pNode_internal->SetObject(pActivate_param);
-	pNode_internal->SetUINT32(MF_TOPONODE_STREAMID, streamSinkID_param);
-	pNode_internal->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE);
-	pTopology->AddNode(pNode_internal);
-	*ppNode_param = pNode_internal;
-	return;
+	//fileName = filename;
+	//fileName = L"LeavesInTheWind.mp3";
+	fileName = L"No Doubt - Tragic Kingdom.wav";
+	Init();
+	PROPVARIANT varStart;
+	PropVariantInit(&varStart);
+	pMediaSession->Start(&GUID_NULL, &varStart);
+	PropVariantClear(&varStart);
 }
 
 void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, DWORD streamIndex_param)
@@ -153,8 +128,12 @@ void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSou
 	IMFTopologyNode* pOutputNode_internal = nullptr;
 	BOOL fSelected_internal = FALSE;
 
+	IMFMediaTypeHandler* pMediaTypeHandler_internal = nullptr;
+	GUID guidMajorType_internal;
+
 	std::function<void()> cleanUp_internal{[&]()
 	{
+		SAFE_RELEASE(pMediaTypeHandler_internal);
 		SAFE_RELEASE(pOutputNode_internal);
 		SAFE_RELEASE(pSourceNode_internal);
 		SAFE_RELEASE(pSinkActivate_internal);
@@ -165,34 +144,34 @@ void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSou
 
 	if (fSelected_internal)
 	{
-		try {
-			help_CreateMediaSinkActivate(pStreamDescriptor_internal, &pSinkActivate_internal);
-			help_AddSourceNode(pTopology_param, pMediaSource_param, pPresentationDescriptor_param, pStreamDescriptor_internal, &pSourceNode_internal);
-			help_AddOutputNode(pTopology_param, pSinkActivate_internal, 0, &pOutputNode_internal);
-		}
-		catch (std::runtime_error e)
+		//Create media sink
+		pStreamDescriptor_internal->GetMediaTypeHandler(&pMediaTypeHandler_internal) >> ThrowOnError("GetMediaTypeHandler", cleanUp_internal);
+		pMediaTypeHandler_internal->GetMajorType(&guidMajorType_internal) >> ThrowOnError("GetMajorType", cleanUp_internal);
+		if (MFMediaType_Audio == guidMajorType_internal)
 		{
-			cleanUp_internal();
-			throw e;
+			MFCreateAudioRendererActivate(&pSinkActivate_internal) >> ThrowOnError("MFCreateAudioRendererActivate", cleanUp_internal);
 		}
+		else
+		{
+			pPresentationDescriptor_param->DeselectStream(streamIndex_param) >> ThrowOnError("DeselectStream");
+			return cleanUp_internal();
+		}
+		//Create source node
+		MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &pSourceNode_internal) >> ThrowOnError("MFCreateTopologyNode", cleanUp_internal);
+		pSourceNode_internal->SetUnknown(MF_TOPONODE_SOURCE, pMediaSource_param) >> ThrowOnError("SetUnknown(MF_TOPONODE_SOURCE", cleanUp_internal);
+		pSourceNode_internal->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, pPresentationDescriptor_param) >> ThrowOnError("SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR", cleanUp_internal);
+		pSourceNode_internal->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, pStreamDescriptor_internal) >> ThrowOnError("SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR", cleanUp_internal);
+		pTopology_param->AddNode(pSourceNode_internal) >> ThrowOnError("AddNode(pSourceNode_internal)", cleanUp_internal);
+		//Create output node
+		MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &pOutputNode_internal) >> ThrowOnError("MFCreateTopologyNode", cleanUp_internal);
+		pOutputNode_internal->SetObject(pSinkActivate_internal) >> ThrowOnError("SetObject(pSinkActivate_internal)", cleanUp_internal);
+		UINT32 defaultStreamSinkID = 0;//Since stream sink id is 0, these two lines are probably superflous~
+		pOutputNode_internal->SetUINT32(MF_TOPONODE_STREAMID, defaultStreamSinkID) >> ThrowOnError("SetUINT32(MF_TOPONODE_STREAMID", cleanUp_internal);//~
+		pOutputNode_internal->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE); //"optional but recommended"
+		pTopology_param->AddNode(pOutputNode_internal);
+
 		pSourceNode_internal->ConnectOutput(0, pOutputNode_internal, 0) >> ThrowOnError("ConnectOutput", cleanUp_internal);
 	}
-	return;
-}
 
-/*REMOVE ME
-void help_CreatePlaybackTopology(IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor *pPresentationDescriptor_param, IMFTopology** ppTopology_param)
-{
-	IMFTopology *pTopology_internal = nullptr;
-	DWORD countSourceStreams_internal = 0;
-
-	MFCreateTopology(&pTopology_internal);
-	pPresentationDescriptor_param->GetStreamDescriptorCount(&countSourceStreams_internal);
-	for (DWORD i = 0; i < countSourceStreams_internal; i++)
-	{
-		help_AddBranchToPartialTopology(pTopology_internal, pMediaSource_param, pPresentationDescriptor_param, i);
-	}
-	*ppTopology_param = pTopology_internal;
-	return;
+	return cleanUp_internal();
 }
-*/
