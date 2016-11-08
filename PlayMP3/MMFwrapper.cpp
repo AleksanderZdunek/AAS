@@ -110,7 +110,7 @@ void Init()
 	//pMediaSession->GetEvent(0, &pEvent) >> ThrowOnError("MMFwrapper Init get set topology event", [&]{SAFE_RELEASE(pEvent); CleanUp();}); //The method blocks until the event generator queues an event.
 }
 
-void Play(wchar_t* filename)
+void Play(const wchar_t* filename)
 {
 	bool playbackEnded(false);
 
@@ -152,7 +152,7 @@ void Shutdown()
 	pMediaSource->Shutdown() >> ThrowOnError("MMFwrapper Shutdown media source shutdown", CleanUp);
 	pMediaSession->Shutdown() >> ThrowOnError("MMFwrapper Shutdown media session shutdown", CleanUp);
 	MFShutdown() >> ThrowOnError("MMFwrapper Shutdown media foundation shutdown", CleanUp);
-	return CleanUp();
+	return;
 }
 
 void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, DWORD streamIndex_param)
