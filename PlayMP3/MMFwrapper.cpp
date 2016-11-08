@@ -68,6 +68,7 @@ const wchar_t* fileName; //LPCWSTR fileName;
 
 //function prototype. clean this up later
 void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, DWORD streamIndex_param);
+void Shutdown();
 
 void Init()
 {
@@ -105,19 +106,53 @@ void Init()
 	pMediaSession->SetTopology(0, pTopology);
 
 	//6. Get events from the Media Session
-	//ignore for now
+	//IMFMediaEvent* pEvent = nullptr;
+	//pMediaSession->GetEvent(0, &pEvent) >> ThrowOnError("MMFwrapper Init get set topology event", [&]{SAFE_RELEASE(pEvent); CleanUp();}); //The method blocks until the event generator queues an event.
 }
 
-void Play(char* filename)
+void Play(wchar_t* filename)
 {
-	//fileName = filename;
-	//fileName = L"LeavesInTheWind.mp3";
-	fileName = L"No Doubt - Tragic Kingdom.wav";
+	bool playbackEnded(false);
+
+	fileName = filename;
 	Init();
 	PROPVARIANT varStart;
-	PropVariantInit(&varStart);
+	PropVariantInit(&varStart); //zeroes the PROPVARIANT union
 	pMediaSession->Start(&GUID_NULL, &varStart);
-	PropVariantClear(&varStart);
+	PropVariantClear(&varStart); //unnecesary in this particular case
+
+	//Get events
+	IMFMediaEvent* pEvent = nullptr;
+	while (!playbackEnded)
+	{
+		pMediaSession->GetEvent(0, &pEvent) >> ThrowOnError("MMFwrapper Play GetEvent", [&] {SAFE_RELEASE(pEvent); CleanUp(); });
+		MediaEventType eventType = MEUnknown;
+		pEvent->GetType(&eventType) >> ThrowOnError("MMFwrapper Play Get event type", [&] {SAFE_RELEASE(pEvent); CleanUp(); });
+		if (MESessionEnded == eventType) playbackEnded = true;
+		//else std::cerr << "some other event received\n";
+		SAFE_RELEASE(pEvent);
+	}	
+
+	return Shutdown();
+}
+
+void Shutdown()
+{
+	pMediaSession->Close() >> ThrowOnError("MMFwrapper Shutdown media session close", CleanUp);
+	bool mediaSessionClosed{ false };
+	while (!mediaSessionClosed)
+	{
+		IMFMediaEvent* pEvent = nullptr;
+		pMediaSession->GetEvent(0, &pEvent) >> ThrowOnError("MMFwrapper Shutdown GetEvent", [&] {SAFE_RELEASE(pEvent); CleanUp(); });
+		MediaEventType eventType = MEUnknown;
+		pEvent->GetType(&eventType) >> ThrowOnError("MMFwrapper Shutdown Get event type", [&] {SAFE_RELEASE(pEvent); CleanUp(); });
+		if (MESessionClosed == eventType) mediaSessionClosed = true;
+		SAFE_RELEASE(pEvent);
+	}
+	pMediaSource->Shutdown() >> ThrowOnError("MMFwrapper Shutdown media source shutdown", CleanUp);
+	pMediaSession->Shutdown() >> ThrowOnError("MMFwrapper Shutdown media session shutdown", CleanUp);
+	MFShutdown() >> ThrowOnError("MMFwrapper Shutdown media foundation shutdown", CleanUp);
+	return CleanUp();
 }
 
 void helper_AddBranchToPartialTopology(IMFTopology *pTopology_param, IMFMediaSource* pMediaSource_param, IMFPresentationDescriptor* pPresentationDescriptor_param, DWORD streamIndex_param)
