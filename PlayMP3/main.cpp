@@ -20,6 +20,7 @@ int main(int argc, char* argv[])
 
 	std::cout << "Play MP3!" << std::endl;
 	try {
+		metadataCallback = [](std::wstring s) {std::wcout << "Metadata:\n" << s << std::endl;};
 		Play(filename.c_str());
 		//Play(L"LeavesInTheWind.mp3");
 		//L"No Doubt - Tragic Kingdom.wav"

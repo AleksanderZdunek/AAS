@@ -4,6 +4,8 @@
 #include <mfidl.h>
 
 #include <comdef.h>
+#include <propvarutil.h>
+#include <strsafe.h>
 
 #include <stdexcept>
 #include <functional>
@@ -16,6 +18,8 @@ IMFMediaSource* pMediaSource = nullptr;
 IMFTopology* pTopology = nullptr;
 IMFPresentationDescriptor* pPresentationDescriptor = nullptr;
 DWORD numberOfSourceStreams = 0;
+
+std::function<void(std::wstring)> metadataCallback = [](std::wstring _) {};
 
 #define SAFE_RELEASE(punk) if ((punk) != NULL) { (punk)->Release(); (punk) = NULL; }
 void CleanUp()
@@ -106,8 +110,44 @@ void Init()
 	pMediaSession->SetTopology(0, pTopology);
 
 	//6. Get events from the Media Session
+	//do this in Play() instead
 	//IMFMediaEvent* pEvent = nullptr;
 	//pMediaSession->GetEvent(0, &pEvent) >> ThrowOnError("MMFwrapper Init get set topology event", [&]{SAFE_RELEASE(pEvent); CleanUp();}); //The method blocks until the event generator queues an event.
+}
+
+void Metadata()
+{
+	IMFMetadataProvider* pMetadataProvider = nullptr;
+	IMFMetadata* pMetadata = nullptr;
+
+	auto cleanUp_internal = [&]
+	{
+		SAFE_RELEASE(pMetadata);
+		SAFE_RELEASE(pMetadataProvider);
+	};
+
+	MFGetService(pMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&pMetadataProvider)) >> ThrowOnError("MMFwrapper Get metadata service", cleanUp_internal);
+	pMetadataProvider->GetMFMetadata(pPresentationDescriptor, 0, 0, &pMetadata) >> ThrowOnError("MMFwrapper Get metadata", cleanUp_internal);
+	
+	std::wstring metadataString(L"");
+	PROPVARIANT varNames;
+	pMetadata->GetAllPropertyNames(&varNames) >> ThrowOnError("MMFwrapper Metadata get all property names", cleanUp_internal);
+	for (ULONG i = 0; i < varNames.calpwstr.cElems; i++)
+	{
+		(metadataString += varNames.calpwstr.pElems[i]) += L": ";
+		PROPVARIANT varValue;
+		pMetadata->GetProperty(varNames.calpwstr.pElems[i], &varValue) >> ThrowOnError("MMFwrapper Metadata GetProperty");
+		std::wstring stringBuffer;
+		stringBuffer.resize(128);
+		HRESULT errorcode = PropVariantToString(varValue, &stringBuffer[0], stringBuffer.capacity());
+		if (STRSAFE_E_INSUFFICIENT_BUFFER == errorcode) stringBuffer += L"...";
+		else errorcode >> ThrowOnError("MMFwrapper Metadata PropVariantToString", cleanUp_internal);
+		(metadataString += stringBuffer.c_str()) += L"\n";
+		PropVariantClear(&varValue);
+	}
+	PropVariantClear(&varNames);
+	metadataCallback(metadataString);
+	return cleanUp_internal();
 }
 
 void Play(const wchar_t* filename)
@@ -116,6 +156,7 @@ void Play(const wchar_t* filename)
 
 	fileName = filename;
 	Init();
+	Metadata();
 	PROPVARIANT varStart;
 	PropVariantInit(&varStart); //zeroes the PROPVARIANT union
 	pMediaSession->Start(&GUID_NULL, &varStart);
