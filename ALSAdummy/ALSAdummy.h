@@ -95,7 +95,7 @@ enum snd_pcm_access_t
 
 	If the non-blocking behaviour is selected, then routine doesn't wait at all.
 */
-snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t* pcm, const void* buffer, snd_pcm_uframes_t size) {}
+snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t* pcm, const void* buffer, snd_pcm_uframes_t size) { return 0; }
 
 /**
 	Prepare PCM for use.
@@ -104,7 +104,7 @@ snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t* pcm, const void* buffer, snd_pcm_ufr
 
 	@return 0 on success, otherwise a negative error code
 */
-int snd_pcm_prepare(snd_pcm_t* pcm) {}
+int snd_pcm_prepare(snd_pcm_t* pcm) { return 0; }
 
 /**
 	Install one PCM hardware configuration chosen from a configuration space, and snd_pcm_prepare it.
@@ -119,7 +119,7 @@ int snd_pcm_prepare(snd_pcm_t* pcm) {}
 	After this call, snd_pcm_prepare() is called automatically and the stream is brought to SND_PCM_STATE_PREPARED state. The hardware parameters cannot be changed when the stream is running (active). The software parameters can be changed at any time.
 	The configuration soace will be updated to reflect the chosen parameters.
 */
-int snd_pcm_hw_params(snd_pcm_t* pcm, snd_pcm_hw_params_t* params) {}
+int snd_pcm_hw_params(snd_pcm_t* pcm, snd_pcm_hw_params_t* params) { return 0; }
 
 /**
 	Restrict a configuration space to contain only one buffer size.
@@ -130,7 +130,7 @@ int snd_pcm_hw_params(snd_pcm_t* pcm, snd_pcm_hw_params_t* params) {}
 
 	@return 0 otherwise a negative error code if configuration space would become empty
 */
-int snd_pcm_hw_params_set_buffer_size(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, snd_pcm_uframes_t val) {}
+int snd_pcm_hw_params_set_buffer_size(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, snd_pcm_uframes_t val) { return 0; }
 
 /**
 	Restric  configuration space to contain only one periods count.
@@ -144,7 +144,7 @@ int snd_pcm_hw_params_set_buffer_size(snd_pcm_t* pcm, snd_pcm_hw_params_t* param
 
 	 Wanted exact value is <,=,> val following dir (-1,0,1)
 */
-int snd_pcm_hw_params_set_periods(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int val, int dir) {}
+int snd_pcm_hw_params_set_periods(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int val, int dir) { return 0; }
 
 /**
 	Restrict a configuration space to contain one channels count.
@@ -155,7 +155,7 @@ int snd_pcm_hw_params_set_periods(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, u
 
 	@return 0, otherwis a negative error code if configuration space would become empty
 */
-int snd_pcm_hw_params_set_channels(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int val) {}
+int snd_pcm_hw_params_set_channels(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int val) { return 0; }
 
 /**
 	Restrict a configuration space to have rate nearest to a target.
@@ -169,7 +169,7 @@ int snd_pcm_hw_params_set_channels(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, 
 
 	target/chosen exact value is <,=,> val following dir (-1,0,1)
 */
-int snd_pcm_hw_params_set_rate_near(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int* val, int dir) {}
+int snd_pcm_hw_params_set_rate_near(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int* val, int dir) { return 0; }
 
 /**
 	Restrict a configuration space to contain only one format.
@@ -180,7 +180,7 @@ int snd_pcm_hw_params_set_rate_near(snd_pcm_t* pcm, snd_pcm_hw_params_t* params,
 
 	@return 0, otherwise a negative error code
 */
-int snd_pcm_hw_params_set_format(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, snd_pcm_format_t format) {}
+int snd_pcm_hw_params_set_format(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, snd_pcm_format_t format) { return 0; }
 
 /**
 	Restrict a configuration space to contain only one acess type.
@@ -191,7 +191,7 @@ int snd_pcm_hw_params_set_format(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, sn
 
 	@return 0, otherwise a negative error code if configuration space would become empty
 */
-int snd_pcm_hw_params_set_access(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, snd_pcm_access_t access) {}
+int snd_pcm_hw_params_set_access(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, snd_pcm_access_t access) { return 0; }
 
 /**
 	Fill params with a ful configuration space for a PCM.
@@ -201,7 +201,7 @@ int snd_pcm_hw_params_set_access(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, sn
 
 	The configuration space will be filled with all possibe ranges for the PCM device.
 */
-int snd_pcm_hw_params_any(snd_pcm_t* pcm, snd_pcm_hw_params_t* params) {}
+int snd_pcm_hw_params_any(snd_pcm_t* pcm, snd_pcm_hw_params_t* params) { return 0; }
 
 /**
 	Opens a PCM.
@@ -213,6 +213,6 @@ int snd_pcm_hw_params_any(snd_pcm_t* pcm, snd_pcm_hw_params_t* params) {}
 
 	@return 0 on success, otherwise a negative error code
 */
-int snd_pcm_open(snd_pcm_t** pcmp, const char* name, snd_pcm_stream_t stream, int mode) {}
+int snd_pcm_open(snd_pcm_t** pcmp, const char* name, snd_pcm_stream_t stream, int mode) { return 0; }
 
 #endif // !ALSADUMMY_H

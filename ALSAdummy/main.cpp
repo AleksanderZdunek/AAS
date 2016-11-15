@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 	snd_pcm_stream_t stream = SND_PCM_STREAM_PLAYBACK;
 
 	//this struct contains info about hardware and can be used to specify the configuration to be used for the PCM stream
-	snd_pcm_hw_params_t *hwparams;
+	snd_pcm_hw_params_t *hwparams = nullptr;
 
 	/* Name of the PCM device, like plughw:0,0          */
 	/* The first number is the number of the soundcard, */
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
 	frames = periodsize >> 2;
 	for (l1 = 0; l1 < 100; l1++)
 	{
-		for (l2 = 0; l2 < num_frames; l2++)
+		for (l2 = 0; l2 < frames; l2++)
 		{
 			s1 = (l2 % 128) * 100 - 5000;
 			s2 = (l2 % 256) * 100 - 5000;
