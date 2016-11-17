@@ -3,13 +3,17 @@
 #define ALSADUMMY_H
 
 #define snd_pcm_hw_params_alloca(ptr)
-#define strdup(lit) lit
+//#define strdup(lit) lit
 
 typedef long snd_pcm_sframes_t;
 typedef unsigned long snd_pcm_uframes_t;
 
 typedef struct _snd_pcm {} snd_pcm_t;
 typedef struct _snd_pcm_hw_params {} snd_pcm_hw_params_t;
+typedef struct _snd_pcm_access_mask {} snd_pcm_access_mask_t;
+typedef struct _snd_pcm_format_mask {} snd_pcm_format_mask_t;
+typedef struct _snd_pcm_subformat_mask {} snd_pcm_subformat_mask_t;
+
 
 enum snd_pcm_stream_t
 {
@@ -67,6 +71,11 @@ enum snd_pcm_format_t
 	SND_PCM_FORMAT_FLOAT,
 	SND_PCM_FORMAT_FLOAT64,
 	SND_PCM_FORMAT_IEC958_SUBFRAME
+};
+
+enum snd_pcm_subformat_t
+{
+	SND_PCM_SUBFORMAT_STD
 };
 
 enum snd_pcm_access_t
@@ -214,5 +223,34 @@ int snd_pcm_hw_params_any(snd_pcm_t* pcm, snd_pcm_hw_params_t* params) { return 
 	@return 0 on success, otherwise a negative error code
 */
 int snd_pcm_open(snd_pcm_t** pcmp, const char* name, snd_pcm_stream_t stream, int mode) { return 0; }
+
+int snd_pcm_hw_params_get_access(const snd_pcm_hw_params_t* params, snd_pcm_access_t* access) { return 0; }
+int snd_pcm_hw_params_get_access_mask(const snd_pcm_hw_params_t* params, snd_pcm_access_mask_t* mask) { return 0; }
+int snd_pcm_hw_params_get_format(const snd_pcm_hw_params_t* params, snd_pcm_format_t* format) { return 0; }
+int snd_pcm_hw_params_get_format_mask(const snd_pcm_hw_params_t* params, snd_pcm_format_mask_t* mask) { return 0; }
+int snd_pcm_hw_params_get_subformat(const snd_pcm_hw_params_t* params, snd_pcm_subformat_t* format) { return 0; }
+int snd_pcm_hw_params_get_subformat_mask(const snd_pcm_hw_params_t* params, snd_pcm_subformat_mask_t* mask) { return 0; }
+int snd_pcm_hw_params_get_channels(const snd_pcm_hw_params_t* param, unsigned int* val) { return 0; }
+int snd_pcm_hw_params_get_channels_max(const snd_pcm_hw_params_t* param, unsigned int* val) { return 0; }
+int snd_pcm_hw_params_get_channels_min(const snd_pcm_hw_params_t* param, unsigned int* val) { return 0; }
+int snd_pcm_hw_params_get_rate(const snd_pcm_hw_params_t* param, unsigned int* val, int* dir) { return 0; }
+int snd_pcm_hw_params_get_rate_max(const snd_pcm_hw_params_t* param, unsigned int* val, int* dir) { return 0; }
+int snd_pcm_hw_params_get_rate_min(const snd_pcm_hw_params_t* param, unsigned int* val, int* dir) { return 0; }
+int snd_pcm_hw_params_get_rate_numden(const snd_pcm_hw_params_t* param, unsigned int* rate_num, unsigned int* rate_den) { return 0; }
+int snd_pcm_hw_params_get_period_time(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_period_time_min(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_period_time_max(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_period_size(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *frames, int *dir) { return 0; }
+int snd_pcm_hw_params_get_period_size_min(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *frames, int *dir) { return 0; }
+int snd_pcm_hw_params_get_period_size_max(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *frames, int *dir) { return 0; }
+int snd_pcm_hw_params_get_periods(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_periods_min(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_periods_max(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_buffer_time(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_buffer_time_min(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_buffer_time_max(const snd_pcm_hw_params_t *params, unsigned int *val, int *dir) { return 0; }
+int snd_pcm_hw_params_get_buffer_size(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val) { return 0; }
+int snd_pcm_hw_params_get_buffer_size_min(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val) { return 0; }
+int snd_pcm_hw_params_get_buffer_size_max(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val) { return 0; }
 
 #endif // !ALSADUMMY_H
