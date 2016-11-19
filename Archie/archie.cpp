@@ -103,7 +103,7 @@ void Play()
 
 	//Preload render buffer
 	errorcode = renderClient->GetBuffer(audioClientBufferFrameCount, &data_pointer); ThrowOnError(errorcode, "Archie::Play GetBuffer on preload");
-	DWORD flags = LoadData(audioClientBufferFrameCount*configFormat.Format.nBlockAlign, data_pointer);
+	/*TODO! This should probably be fixed*/DWORD flags = LoadData(audioClientBufferFrameCount*configFormat.Format.nBlockAlign, data_pointer);
 	errorcode = renderClient->ReleaseBuffer(audioClientBufferFrameCount, flag); ThrowOnError(errorcode, "Archie::Play ReleaseBuffer on preload");
 
 	//Start playing
