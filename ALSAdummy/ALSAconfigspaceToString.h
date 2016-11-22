@@ -6,5 +6,6 @@
 #include<alsa/asoundlib.h>
 
 std::string configspace2string(snd_pcm_hw_params_t* conf);
+std::string config2string(snd_pcm_hw_params_t* conf);
 
 #endif // !ALSACONFIGSPACETOSTRING_H

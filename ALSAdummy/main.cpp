@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdio>
-//#include <alsa/asoundlib.h>
-#include "ALSAconfigspaceToString.cpp"
+#include <alsa/asoundlib.h>
+//#include "ALSAconfigspaceToString.cpp"
 
 int main(int argc, char* argv[])
 {
@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
 	std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 	std::cout << "hwparams any config space" << std::endl;
-	std::cout << configspace2string(hwparams);
+	//std::cout << configspace2string(hwparams);
 
 	if (0 > snd_pcm_hw_params(device, hwparams))
 	{
@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
 	std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 	std::cout << "hwparams single config" << std::endl;
-	std::cout << configspace2string(hwparams);
+	//std::cout << configspace2string(hwparams);
 
 	return 0;
 }

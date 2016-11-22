@@ -14,6 +14,10 @@ typedef struct _snd_pcm_access_mask {} snd_pcm_access_mask_t;
 typedef struct _snd_pcm_format_mask {} snd_pcm_format_mask_t;
 typedef struct _snd_pcm_subformat_mask {} snd_pcm_subformat_mask_t;
 
+#define snd_pcm_access_mask_alloca(ptr) ptr = (snd_pcm_acces_mask_t*)43;
+#define snd_pcm_format_mask_alloca(ptr) ptr = (snd_pcm_format_mask_t*)43;
+#define snd_pcm_subformat_mask_alloca(ptr) [ptr = (snd_pcm_subformat_mask_t*)43;
+
 
 enum snd_pcm_stream_t
 {
@@ -252,5 +256,11 @@ int snd_pcm_hw_params_get_buffer_time_max(const snd_pcm_hw_params_t *params, uns
 int snd_pcm_hw_params_get_buffer_size(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val) { return 0; }
 int snd_pcm_hw_params_get_buffer_size_min(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val) { return 0; }
 int snd_pcm_hw_params_get_buffer_size_max(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val) { return 0; }
+void snd_pcm_hw_params_free(snd_pcm_hw_params_t* obj) {};
+int snd_pcm_hw_free(snd_pcm_t* pcm) { return 0; }
+int snd_pcm_hw_params_malloc(snd_pcm_hw_params_t** ptr) { return 0; }
+int snd_pcm_hw_params_set_rate(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int val, int dir) { return 0; };
+int snd_pcm_hw_params_set_rate_near(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int* val, int* dir) { return 0; };
+int snd_pcm_hw_params_set_period_time_near(snd_pcm_t* pcm, snd_pcm_hw_params_t* params, unsigned int* val, int* dir) { return 0; }
 
 #endif // !ALSADUMMY_H
