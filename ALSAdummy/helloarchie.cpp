@@ -5,18 +5,19 @@
 
 const float twoPI = (float)atan(1)*8;
 const float toneFrequency = 261.626f;
-UINT32 sampleRate(0); //This should be configurable, really.
-int channels(0);	//This should be configurable, really.
-int sampleSize(0); //bytes. //Because IEEE_FLOAT //This should be configurable, really.
+UINT32 sampleRate(0);
+int channels(0);
+int sampleSize(0); //bytes
 int frameSize(0);
-const float phaseDelta = toneFrequency * twoPI / sampleRate;
+float phaseDelta(0);
 
 void GetConfigValues()
 {
 	sampleRate = Archie::configFormat.Format.nSamplesPerSec;
 	channels = Archie::configFormat.Format.nChannels;
-	sampleSize = Archie::configFormat.Format.wBitsPerSample;
+	sampleSize = Archie::configFormat.Format.wBitsPerSample/8;
 	frameSize = channels*sampleSize;
+	phaseDelta = toneFrequency * twoPI / sampleRate;
 }
 
 DWORD Tone(UINT32 bufferSize, BYTE* pBuffer)
@@ -41,11 +42,18 @@ int main(int argc, char* argv[])
 	std::cout << "Hello Archie!" << std::endl;
 	std::cout << "A tinnitus simulator is the Hello World of audio programming." << std::endl;
 
-	Archie::Init();
-	GetConfigValues();
-	Archie::LoadData = Tone;
-	Archie::Play();
-	Archie::UnInit(); //This will never be reached, because the program does not handle user input to terminate gracefully.
+	try
+	{
+		Archie::Init();
+		GetConfigValues();
+		Archie::LoadData = Tone;
+		Archie::Play();
+		Archie::UnInit(); //This will never be reached, because the program does not handle user input to terminate gracefully.
+	}
+	catch (std::runtime_error e)
+	{
+		std::cout << "Runtime error. what: " << e.what() << std::endl;
+	}
 
 	return 0;
 }

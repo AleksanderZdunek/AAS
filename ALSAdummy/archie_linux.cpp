@@ -4,8 +4,8 @@
 #include <stdexcept>
 #include <string>
 
-#include <cstdio>
-#include <iostream>
+//#include <cstdio>
+//#include <iostream>
 //#include "ALSAconfigspaceToString.h"
 
 namespace Archie{
@@ -15,7 +15,7 @@ const char defaultDeviceName[]{"default"};
 snd_pcm_t* device = nullptr;
 snd_pcm_hw_params_t* hwConfig = nullptr;
 
-unsigned int desiredPeriodTime = 1000000; //i THINK this is in micro seconds
+unsigned int desiredPeriodTime = 500000; //i THINK this is in micro seconds
 unsigned int periodTime;
 WORD sampleSize;
 snd_pcm_uframes_t periodSize_frames;
@@ -120,6 +120,7 @@ void Configure()
 	periodTime = desiredPeriodTime;
 	int dir;
 	snd_pcm_hw_params_set_period_time_near(device, hwConfig, &periodTime, &dir) >> ThrowOnError("snd_pcm_hw_params_set_period_time_near");
+	//snd_pcm_hw_params_set_buffer_time_near(device, hwConfig, &periodTime, &dir) >> ThrowOnError("snd_pcm_hw_params_set_period_time_near");
 }
 
 void GetConfiguration()
@@ -130,6 +131,7 @@ void GetConfiguration()
 	int rateDir;
 	GUID guidFormatTag;
 
+	snd_pcm_hw_params_get_format(hwConfig, &format) >> ThrowOnError("snd_pcm_hw_params_get_format");
 	switch (format)
 	{
 	case SND_PCM_FORMAT_U8:
@@ -153,19 +155,19 @@ void GetConfiguration()
 		guidFormatTag = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 		break;
 	default:
-		-1 >> ThrowOnError("GetConfiguration unhandled format tag: " + format);
+		-1 >> ThrowOnError("GetConfiguration unhandled format tag: ");
 		break;
 	}
 
-	snd_pcm_hw_params_get_format(hwConfig, &format) >> ThrowOnError("snd_pcm_hw_params_get_format");
 	snd_pcm_hw_params_get_channels(hwConfig, &channels) >> ThrowOnError("snd_pcm_get_channels");
 	snd_pcm_hw_params_get_rate(hwConfig, &sampleRate, &rateDir) >> ThrowOnError("snd_pcm_hw_params_get_rate");
 	if (0 != rateDir) - 1 >> ThrowOnError("snd_pcm_hw_params_get_rate did not return exact rate");
 
 	configFormat = SetWaveformatextensible(channels, sampleRate, sampleRate, guidFormatTag);
 
-	int dir;
+	int dir(0);
 	snd_pcm_hw_params_get_period_size(hwConfig, &periodSize_frames, &dir) >> ThrowOnError("snd_pcm_hw_params_get_period_size");
+	//snd_pcm_hw_params_get_buffer_size(hwConfig, &periodSize_frames) >> ThrowOnError("snd_pcm_hw_params_get_period_size");
 	if (0 < dir) periodSize_frames -= 1;
 	periodSize_bytes = periodSize_frames * sampleSize * configFormat.Format.nChannels;
 	intermediateBuffer = new BYTE[2 * periodSize_bytes];
@@ -190,11 +192,12 @@ void UnInit()
 
 void Play()
 {
-	DWORD flag = LoadData(2 * periodSize_bytes, intermediateBuffer);
+	DWORD flag = LoadData(2*periodSize_bytes, intermediateBuffer);
+	snd_pcm_writei(device, intermediateBuffer, 2*periodSize_frames) >> ThrowOnError("snd_pcm_writei");
 	while (AUDCLNT_BUFFERFLAGS_SILENT != flag)
 	{	
 		flag = LoadData(periodSize_bytes, intermediateBuffer);
-		std::cerr << snd_pcm_writei(device,intermediateBuffer, periodSize_frames);
+		snd_pcm_writei(device, intermediateBuffer, periodSize_frames) >> ThrowOnError("snd_pcm_writei in loop");
 	}
 }
 
