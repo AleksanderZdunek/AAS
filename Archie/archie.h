@@ -1,19 +1,13 @@
 #pragma once
 #ifndef ARCHIE_H
 #define ARCHIE_H
-#include <functional>
-#include <Audioclient.h>
 
-namespace Archie{
+#if defined(_WIN32)
+#include "archie_win.h"
+#elif defined(__linux__)
+#include "archie_linux.h"
+#else
+#error "Unknown compiler Operating System"
+#endif
 
-extern WAVEFORMATEXTENSIBLE configFormat;
-extern std::function<DWORD(UINT32, BYTE*)> LoadData;
-
-bool Init();
-void UnInit();
-
-void Play();
-
-}//!namespace Archie
-
-#endif //!ARCHIE_H
+#endif // !ARCHIE_H
