@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ARCHIE_H
-#define ARCHIE_H
+#ifndef ARCHIE_WIN_H
+#define ARCHIE_WIN_H
 #include <functional>
 #include <Audioclient.h>
 
@@ -16,4 +16,4 @@ void Play();
 
 }//!namespace Archie
 
-#endif //!ARCHIE_H
+#endif //!ARCHIE_WIN_H

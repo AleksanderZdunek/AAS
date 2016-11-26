@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "archie.h"
+#include <archie.h>
 #include "WaveHeaderStructs.h"
 
 struct Header
