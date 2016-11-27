@@ -112,7 +112,7 @@ void Configure()
 	}
 
 	snd_pcm_hw_params_set_access(device, hwConfig, SND_PCM_ACCESS_RW_INTERLEAVED) >> ThrowOnError("snd_pcm_hw_params_set_access");
-	snd_pcm_hw_params_set_format(device, hwConfig, SND_PCM_FORMAT_FLOAT_LE) >> ThrowOnError("snd_pcm_hw_params_set_format");
+	snd_pcm_hw_params_set_format(device, hwConfig, format) >> ThrowOnError("snd_pcm_hw_params_set_format");
 	snd_pcm_hw_params_set_channels(device, hwConfig, nChannels) >> ThrowOnError("snd_pcm_hw_params_set_channels");
 	snd_pcm_hw_params_set_rate_near(device, hwConfig, &sampleRate, &rateDir) >> ThrowOnError("snd_pcm_hw_params_set_rate");
 	if (0 != rateDir) -1 >> ThrowOnError("snd_pcm_hw_params_set_rate did not return exact rate");
@@ -163,7 +163,7 @@ void GetConfiguration()
 	snd_pcm_hw_params_get_rate(hwConfig, &sampleRate, &rateDir) >> ThrowOnError("snd_pcm_hw_params_get_rate");
 	if (0 != rateDir) - 1 >> ThrowOnError("snd_pcm_hw_params_get_rate did not return exact rate");
 
-	configFormat = SetWaveformatextensible(channels, sampleRate, sampleRate, guidFormatTag);
+	configFormat = SetWaveformatextensible(channels, sampleRate, sampleSize, guidFormatTag);
 
 	int dir(0);
 	snd_pcm_hw_params_get_period_size(hwConfig, &periodSize_frames, &dir) >> ThrowOnError("snd_pcm_hw_params_get_period_size");
