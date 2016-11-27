@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <archie.h>
+#include <ArchieHelpers.h>
 #include "WaveHeaderStructs.h"
 
 struct Header
@@ -60,8 +61,14 @@ int main(int argc, char* argv[])
 					formatChunk.Format.cbSize = 22;
 					formatChunk.Samples.wValidBitsPerSample = formatChunk.Format.wBitsPerSample;
 				}
+				std::cout << "\nBefore Archie::configFormat set\n";//debug
+				printWAVEFORMATEXTENSIBLE(Archie::configFormat);//debug
 				Archie::configFormat = formatChunk;
+				std::cout << "\nAfter Archie::configFormat set\n";//debug
+				printWAVEFORMATEXTENSIBLE(Archie::configFormat);//debug
 				Archie::Init();
+				std::cout << "\nAfter Archie::Init\n";//debug
+				printWAVEFORMATEXTENSIBLE(Archie::configFormat);//debug
 			}
 			else if ('atad' == tmpChunkHeader.IDtag)
 			{
